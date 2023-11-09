@@ -1,3 +1,4 @@
+// src\App.js
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
@@ -6,19 +7,21 @@ function App() {
   const [messages, setMessages] = useState([]);
   const ws = useRef(null);
 
-  // This effect will run once after the initial rendering of the component
   useEffect(() => {
-    // Connect to your WebSocket backend
     ws.current = new WebSocket('wss://chat-stream-51f519488d32.herokuapp.com/');
 
     ws.current.onmessage = (event) => {
-      // Update the messages state when a new message is received
-      const message = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, message]);
+      console.log('Message received:', event.data);
+      try {
+        const message = JSON.parse(event.data);
+        setMessages((prevMessages) => [...prevMessages, message]);
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
     };
 
     ws.current.onopen = () => {
-      console.log('Connected to the WebSocket server.');
+      console.log('WebSocket connection established.');
     };
 
     ws.current.onerror = (error) => {
@@ -26,10 +29,9 @@ function App() {
     };
 
     ws.current.onclose = () => {
-      console.log('Disconnected from the WebSocket server.');
+      console.log('WebSocket connection closed.');
     };
 
-    // Clean up the WebSocket connection when the component unmounts
     return () => {
       if (ws.current) {
         ws.current.close();
@@ -43,8 +45,8 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Sending message:', inputValue);
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      // Send the inputValue as a stringified JSON object
       ws.current.send(JSON.stringify({ prompt: inputValue }));
       setInputValue('');
     }
@@ -53,7 +55,6 @@ function App() {
   const renderMessages = () => {
     return messages.map((message, index) => (
       <div key={index} className="message">
-        {/* Render the message text or the entire message */}
         <p>{message.text || message}</p>
       </div>
     ));
