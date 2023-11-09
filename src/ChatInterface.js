@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './App.css';
 
-function App() {
+const ChatInterface = () => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([]);
   const ws = useRef(null);
 
-  // This effect will run once after the initial rendering of the component
   useEffect(() => {
-    // Connect to your WebSocket backend
+    // Establish a WebSocket connection with the server
     ws.current = new WebSocket('wss://chat-stream-51f519488d32.herokuapp.com/');
-
+    
     ws.current.onmessage = (event) => {
-      // Update the messages state when a new message is received
+      // When a message is received, parse it and update the state
       const message = JSON.parse(event.data);
       setMessages((prevMessages) => [...prevMessages, message]);
     };
 
     ws.current.onopen = () => {
-      console.log('Connected to the WebSocket server.');
+      console.log('Connected to the WebSocket server');
     };
 
     ws.current.onerror = (error) => {
@@ -26,7 +24,7 @@ function App() {
     };
 
     ws.current.onclose = () => {
-      console.log('Disconnected from the WebSocket server.');
+      console.log('Disconnected from the WebSocket server');
     };
 
     // Clean up the WebSocket connection when the component unmounts
@@ -37,50 +35,45 @@ function App() {
     };
   }, []);
 
+  // Update the inputValue state when the user types in the input field
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
 
+  // Send the inputValue to the server when the user submits the form
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent the default form submit action
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      // Send the inputValue as a stringified JSON object
       ws.current.send(JSON.stringify({ prompt: inputValue }));
-      setInputValue('');
+      setInputValue(''); // Clear the input field after sending the message
     }
   };
 
+  // Render the messages received from the server
   const renderMessages = () => {
     return messages.map((message, index) => (
       <div key={index} className="message">
-        {/* Render the message text or the entire message */}
-        <p>{message.text || message}</p>
+        <p>{message.text || message}</p> {/* Adjust according to the message format */}
       </div>
     ));
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Chat with AI</h1>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder="Type your message here..."
-            className="App-input"
-          />
-          <button type="submit" className="App-submit">
-            Send
-          </button>
-        </form>
-        <div className="App-messages">
-          {renderMessages()}
-        </div>
-      </header>
+    <div className="chat-interface">
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          placeholder="Type your message here..."
+        />
+        <button type="submit">Send</button>
+      </form>
+      <div className="messages">
+        {renderMessages()}
+      </div>
     </div>
   );
-}
+};
 
-export default App;
+export default ChatInterface;
